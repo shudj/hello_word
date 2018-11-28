@@ -3,7 +3,7 @@ package com.jl.test.mode.producer2consumer;
 /**
  * Author: shudj
  * Time: 2018/11/28 15:03
- * Description:
+ * Description: 消费者；消费信息
  */
 public class Consumer {
     private String lock;
