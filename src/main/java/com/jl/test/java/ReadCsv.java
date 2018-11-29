@@ -5,6 +5,9 @@ import com.csvreader.CsvWriter;
 
 import java.io.FileNotFoundException;
 import java.nio.charset.Charset;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +29,7 @@ public class ReadCsv {
     public static void readCsvFile(String path) {
         try {
             List<String[]> csv = new ArrayList<>();
-            CsvReader reader = new CsvReader(path, ',', Charset.forName("GBK"));
+            CsvReader reader = new CsvReader(path, '\t', Charset.forName("GBK"));
 
             // 跳过表头   如果需要表头的话，不要写这句
             reader.readHeaders();
@@ -34,36 +37,53 @@ public class ReadCsv {
                 csv.add(reader.getValues());
             }
             reader.close();
-
+            Connection conn = DBConnection.getConnection();
+            Statement stat = conn.createStatement();
+            ResultSet rs = null;
+            List<String[]> res = new ArrayList<>();
+            List<String[]> resNull = new ArrayList<>();
             for (int i = 0; i < csv.size(); i++) {
-                System.out.print(csv.get(i)[0] + "\t");
-                System.out.print(csv.get(i)[1] + "\t");
-                System.out.print(csv.get(i)[2]);
-                System.out.println();
-                if (i == 7) {
-                    break;
+                String code = csv.get(i)[0];
+                String count = csv.get(i)[1];
+                rs = stat.executeQuery("select name from skuinfo where isdel = 0 and code =" + code);
+                String[] contents = null;
+                if(rs.next()) {
+                    contents = new String[]{rs.getString("name"), code, count};
+                    res.add(contents);
+                } else {
+                    contents = new String[]{"", code, count};
+                    resNull.add(contents);
                 }
             }
+
+            csvWrite("C:\\Users\\admin\\Desktop\\test_130.csv", res, resNull);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static void csvWrite(String path){
+    public static void csvWrite(String path, List<String[]> res, List<String[]> resNull){
         try {
             //日文编码 SJIS
-            CsvWriter wr =new CsvWriter(path,',',Charset.forName("GBK"));
-            String[] contents = {"警告信息","非法操作","没有权限","操作失败"};
-            wr.writeRecord(contents);
+            CsvWriter wr =new CsvWriter(path,'\t',Charset.forName("GBK"));
+            for (String[] contents : res) {
+                wr.writeRecord(contents);
+            }
             wr.close();
+
+            CsvWriter wrNull =new CsvWriter("C:\\Users\\admin\\Desktop\\test1_130.csv",'\t',Charset.forName("GBK"));
+            for (String[] contents : resNull) {
+                wrNull.writeRecord(contents);
+            }
+            wrNull.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public static void main(String[] args) {
-        String path = "C:\\Users\\admin\\Desktop\\tmp.csv";
+        String path = "C:\\Users\\admin\\Desktop\\count原始.csv";
         /*
          * (?i) 表示所在位置右侧的表达式开启忽略大小写模式
          * (?s) 表示所在位置右侧的表达式开启单行模式
@@ -73,7 +93,6 @@ public class ReadCsv {
          **/
         // 匹配以csv或CSV结尾
         System.out.println(path.matches("^.+\\.(?i)(csv)$"));
-        // readCsvFile(path);
-        csvWrite("C:\\Users\\admin\\Desktop\\test.csv");
+        readCsvFile(path);
     }
 }
