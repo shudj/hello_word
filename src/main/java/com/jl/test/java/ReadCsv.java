@@ -111,26 +111,34 @@ public class ReadCsv {
         ResultSet rs = null;
         List<String[]> res = new ArrayList<>();
         List<String[]> resNull = new ArrayList<>();
-        HashMap<String, String> hm = readCsv2map("C:\\Users\\admin\\Desktop\\count137.csv");
+        /*HashMap<String, String> hm = readCsv2map("C:\\Users\\admin\\Desktop\\count137.csv");
         for (int i = 0; i < csv.size(); i++) {
             String code = csv.get(i)[0];
             String count1 = csv.get(i)[1];
             String count2 = csv.get(i)[2];
             String count3 = csv.get(i)[3];
             String count4 = csv.get(i)[4];
-            rs = stat.executeQuery("select name from skuinfo where isdel = 0 and code =" + code);
+            rs = stat.executeQuery("select name,image0 from skuinfo where isdel = 0 and code =" + code);
             String[] contents = null;
             // 如果查到值
             if(rs.next()) {
-                contents = new String[]{rs.getString("name"), code, count1, count2, count3, count4, hm.get(code)};
+                contents = new String[]{rs.getString("name"), code, count1, count2, count3, count4, hm.get(code),rs.getString("image0")};
                 res.add(contents);
             // 查不到值
             } else {
                 contents = new String[]{"", code, count1, count2, count3, count4, hm.get(code)};
                 resNull.add(contents);
             }
-        }
+        }*/
 
-        csvWrite("C:\\Users\\admin\\Desktop\\test_130.csv", res, resNull);
+        rs = stat.executeQuery("select name,code from skuinfo where isdel = 0");
+        while (rs.next()) {
+            res.add(new String[]{rs.getString("name").replace(",", "，"), rs.getString("code")});
+        }
+        rs.close();
+        stat.close();
+        conn.close();
+
+        csvWrite("C:\\Users\\admin\\Desktop\\name2code.csv", res, resNull);
     }
 }

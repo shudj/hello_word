@@ -13,8 +13,8 @@ public class DBConnection {
             DruidDataSource dataSource = new DruidDataSource();
             dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
             dataSource.setUsername("root");
-            dataSource.setPassword("julong");
-            dataSource.setUrl("jdbc:mysql://localhost:3306/sku?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8&useSSL=false");
+            dataSource.setPassword("123456");
+            dataSource.setUrl("jdbc:mysql://192.168.1.130:3306/sku?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8&useSSL=false");
             Connection connection = dataSource.getConnection();
             return connection;
 
