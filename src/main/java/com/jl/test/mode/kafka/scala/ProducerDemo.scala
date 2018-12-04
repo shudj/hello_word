@@ -15,7 +15,7 @@ object ProducerDemo extends App {
          * 0:生成者不会等待服务器的任何确认信号
          * 1:一旦leader broker将信息写入本地日志，生成者就会接收到确认信号
          * all:当leader broker已经接收到所有副本成功的确认信号时，生产者才会收到确认信号
-         **/
+         */
         producerProps.put("acks", "all")
         // 如果消息发送失败，表示生成者在抛出异常之前重试发送消息的次数
         producerProps.put("retries", 1)
