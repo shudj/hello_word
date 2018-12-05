@@ -1,12 +1,17 @@
 package com.jl.test.mode.kafka.java.ip;
 
 import kafka.serializer.StringDecoder;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaDStream;
+import org.apache.spark.streaming.api.java.JavaInputDStream;
 import org.apache.spark.streaming.api.java.JavaPairInputDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
-import org.apache.spark.streaming.kafka.KafkaUtils;
+import org.apache.spark.streaming.kafka010.KafkaUtils;
+import org.apache.spark.streaming.kafka010.LocationStrategies;
+import org.apache.spark.streaming.kafka010.ConsumerStrategies;
 import scala.Tuple2;
 import scala.math.Ordering;
 
@@ -22,32 +27,36 @@ public class FraudDetectionApp {
     private static final Pattern SAPCE = Pattern.compile(" ");
 
     public static void main(String[] args) throws InterruptedException {
+        System.setProperty("hadoop.home.dir", "D:\\work\\hadoop-2.8.2");
         PropertyReader propertyReader = new PropertyReader();
         CacheIpLookup cacheIpLookup = new CacheIpLookup();
-        SparkConf conf = new SparkConf().setAppName("IP_FFAUD");
+        SparkConf conf = new SparkConf().setAppName("IP_FFAUD").setMaster("local[2]");
         JavaStreamingContext javaStreamingContext = new JavaStreamingContext(conf, Durations.seconds(3));
         Set<String> topicSet = new HashSet<>(Arrays.asList(propertyReader.getPropertyValue(PropertyReader.TOPIC).split(",")));
-        Map<String, String> kafkaConfiguration = new HashMap<>();
-        kafkaConfiguration.put("metadata.broker.list", propertyReader.getPropertyValue(PropertyReader.BROKER_LIST));
+        Map<String, Object> kafkaConfiguration = new HashMap<>();
+        kafkaConfiguration.put("bootstrap.servers", propertyReader.getPropertyValue(PropertyReader.BROKER_LIST));
         kafkaConfiguration.put("group.id", propertyReader.getPropertyValue(PropertyReader.GROUP_ID));
+        kafkaConfiguration.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        kafkaConfiguration.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
 
-        JavaPairInputDStream<String, String> messages =
-                KafkaUtils.createDirectStream(
-                        javaStreamingContext,
-                        String.class,
-                        String.class,
-                        StringDecoder.class,
-                        StringDecoder.class,
-                        kafkaConfiguration,
-                        topicSet);
-        JavaDStream<String> ipRecords = messages.map(Tuple2::_2);
+        JavaInputDStream<ConsumerRecord<Object, Object>> messages = KafkaUtils.createDirectStream(
+                javaStreamingContext,
+                LocationStrategies.PreferConsistent(),
+                ConsumerStrategies.Subscribe((Collection<String>) topicSet, kafkaConfiguration));
+
+        JavaDStream<String> ipRecords = messages.map(new Function<ConsumerRecord<Object, Object>, String>() {
+            @Override
+            public String call(ConsumerRecord<Object, Object> s) throws Exception {
+                return String.valueOf(s);
+            }
+        });
         JavaDStream<String> fraudIPs = ipRecords.filter(s -> {
             String IP = s.split(",")[0];
             String[] ranges = IP.split("\\.");
-
+            System.out.println(ranges[0]);
             return cacheIpLookup.isFraudIP(ranges[0]);
         });
-        fraudIPs.dstream().saveAsTextFiles("","");
+        fraudIPs.print();
         javaStreamingContext.start();
         javaStreamingContext.awaitTermination();
     }

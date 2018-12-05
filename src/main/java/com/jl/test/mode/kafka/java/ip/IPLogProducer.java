@@ -32,7 +32,9 @@ public class IPLogProducer extends TimerTask {
         String ip = rand.nextInt(256) + "." + rand.nextInt(256) + "." +
                 rand.nextInt(256) + "." + rand.nextInt(256);
         String[] colums = line.split(" ");
+        System.out.print(colums[0] + "\t");
         colums[0] = ip;
+        System.out.println(ip);
         return Arrays.toString(colums);
     }
 

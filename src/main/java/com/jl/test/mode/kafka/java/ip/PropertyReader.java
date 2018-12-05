@@ -10,6 +10,11 @@ import java.util.Properties;
  * Description:
  */
 public class PropertyReader {
+
+    public static final String TOPIC = "topic";
+    public static final String BROKER_LIST = "broker.list";
+    public static final String APP_NAME = "appname";
+    public static final String GROUP_ID = "group.id";
     private Properties prop = null;
     public PropertyReader() {
         InputStream is = null;
@@ -25,10 +30,5 @@ public class PropertyReader {
     public String getPropertyValue(String key) {
         return prop.getProperty(key);
     }
-
-    public static final String TOPIC = "topic";
-    public static final String BROKER_LIST = "broker.list";
-    public static final String APP_NAME = "appname";
-    public static final String GROUP_ID = "group.id";
 
 }
