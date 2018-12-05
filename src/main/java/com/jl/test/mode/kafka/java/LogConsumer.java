@@ -1,8 +1,15 @@
 package com.jl.test.mode.kafka.java;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
+import kafka.consumer.Consumer;
+import kafka.consumer.ConsumerConfig;
+import kafka.consumer.ConsumerIterator;
+import kafka.consumer.KafkaStream;
+import kafka.javaapi.consumer.ConsumerConnector;
+import kafka.message.MessageAndMetadata;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -15,9 +22,9 @@ public class LogConsumer {
     private int partitionNum;
     private MessageExecutor excutor;
     private ConsumerConnector connector;
-    private ExceutorService threadPool;
+    private ExecutorService threadPool;
 
-    public LogConsumer(String topic, int partitionsNum, MessageExecutor executor) {
+    public LogConsumer(String topic, int partitionsNum, MessageExecutor executor) throws IOException {
         Properties props = new Properties();
         props.load(ClassLoader.getSystemResourceAsStream("consumer.properties"));
         config = new ConsumerConfig(props);
@@ -27,14 +34,14 @@ public class LogConsumer {
     }
 
     public void start() throws Exception{
-        connector = Consumer.createJavaComsumerConnector(config);
+        connector = Consumer.createJavaConsumerConnector(config);
         Map<String, Integer> topics = new HashMap<String, Integer>();
         topics.put(topic, partitionNum);
         Map<String, List<KafkaStream<byte[], byte[]>>> streams = connector.createMessageStreams(topics);
         List<KafkaStream<byte[], byte[]>> partitions = streams.get(topics);
-        threadPool = (ExecutorService) Executors.newFixedThreadPool(partitionNum);
+        threadPool = Executors.newFixedThreadPool(partitionNum);
         for (KafkaStream<byte[], byte[]> partition : partitions) {
-            threadPool).execute(new MessageRunner(partition);
+            threadPool.execute(new MessageRunner(partition));
         }
     }
 
@@ -72,7 +79,8 @@ public class LogConsumer {
     public static void main(String[] args) {
         LogConsumer consumer = null;
         try {
-            MessageExcutor excutor = new MessageExecutor() {
+            MessageExecutor excutor = new MessageExecutor() {
+                @Override
                 public void execute(String message) {
                     System.out.println(message);
                 }

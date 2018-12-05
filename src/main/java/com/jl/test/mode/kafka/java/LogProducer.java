@@ -1,16 +1,20 @@
 package com.jl.test.mode.kafka.java;
 
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
 public class LogProducer {
-    private Producer<String, String> inner;
+    private KafkaProducer<String, String> inner;
+
     public LogProducer() throws Exception {
         Properties props = new Properties();
         props.load(ClassLoader.getSystemResourceAsStream("producer.properties"));
-        ProducerConfig config = new ProducerConfig(props);
-        inner = new Producer<String, String>(config);
+        inner = new KafkaProducer<String, String>(props);
     }
 
     public void send(String topicName, String message) {
@@ -18,7 +22,7 @@ public class LogProducer {
             return;
         }
 
-        KeyedMessage<String, String> km = new KeyedMessage<>(topicName, message);
+        ProducerRecord<String, String> km = new ProducerRecord<>(topicName, message);
         inner.send(km);
     }
 
@@ -30,13 +34,12 @@ public class LogProducer {
             return;
         }
 
-        List<KeyedMessage<String, String>> kms = new ArrayList<KeyedMessage<String, String>>();
+        List<ProducerRecord<String, String>> kms = new ArrayList<ProducerRecord<String, String>>();
         for (String entry : messages) {
-            KeyedMessage<String, String> km = new KeyedMessage<>(topicName, message);
-            kms.add(km);
+            ProducerRecord<String, String> km = new ProducerRecord<>(topicName, entry);
+            inner.send(km);
         }
 
-        inner.send(kms);
     }
 
     public void close() {
