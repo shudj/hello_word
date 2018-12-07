@@ -1,6 +1,8 @@
 package com.jl.test.mode.kafka.java.ip;
 
+import com.jl.test.mode.producer2consumer.Consumer;
 import kafka.serializer.StringDecoder;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.function.Function;
@@ -31,29 +33,29 @@ public class FraudDetectionApp {
         PropertyReader propertyReader = new PropertyReader();
         CacheIpLookup cacheIpLookup = new CacheIpLookup();
         SparkConf conf = new SparkConf().setAppName("IP_FFAUD").setMaster("local[2]");
-        JavaStreamingContext javaStreamingContext = new JavaStreamingContext(conf, Durations.seconds(3));
+        JavaStreamingContext javaStreamingContext = new JavaStreamingContext(conf, Durations.seconds(6));
         Set<String> topicSet = new HashSet<>(Arrays.asList(propertyReader.getPropertyValue(PropertyReader.TOPIC).split(",")));
         Map<String, Object> kafkaConfiguration = new HashMap<>();
-        kafkaConfiguration.put("bootstrap.servers", propertyReader.getPropertyValue(PropertyReader.BROKER_LIST));
-        kafkaConfiguration.put("group.id", propertyReader.getPropertyValue(PropertyReader.GROUP_ID));
-        kafkaConfiguration.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-        kafkaConfiguration.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        kafkaConfiguration.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, propertyReader.getPropertyValue(PropertyReader.BROKER_LIST));
+        kafkaConfiguration.put(ConsumerConfig.GROUP_ID_CONFIG, propertyReader.getPropertyValue(PropertyReader.GROUP_ID));
+        kafkaConfiguration.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+        kafkaConfiguration.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
 
         JavaInputDStream<ConsumerRecord<Object, Object>> messages = KafkaUtils.createDirectStream(
                 javaStreamingContext,
-                LocationStrategies.PreferConsistent(),
+                LocationStrategies.PreferBrokers(),
                 ConsumerStrategies.Subscribe((Collection<String>) topicSet, kafkaConfiguration));
 
         JavaDStream<String> ipRecords = messages.map(new Function<ConsumerRecord<Object, Object>, String>() {
             @Override
             public String call(ConsumerRecord<Object, Object> s) throws Exception {
-                return String.valueOf(s);
+                return String.valueOf(s.value());
             }
         });
         JavaDStream<String> fraudIPs = ipRecords.filter(s -> {
             String IP = s.split(",")[0];
             String[] ranges = IP.split("\\.");
-            System.out.println(ranges[0]);
+            System.out.println(ranges[0] + "\t" + s.split(",")[1]);
             return cacheIpLookup.isFraudIP(ranges[0]);
         });
         fraudIPs.print();

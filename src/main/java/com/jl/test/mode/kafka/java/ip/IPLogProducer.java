@@ -1,6 +1,7 @@
 package com.jl.test.mode.kafka.java.ip;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
@@ -16,6 +17,7 @@ import java.util.concurrent.Future;
  */
 public class IPLogProducer extends TimerTask {
     static String path = "";
+    private int count = 0;
     public BufferedReader readFile() {
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("./IP_LOG.log")));
 
@@ -33,7 +35,7 @@ public class IPLogProducer extends TimerTask {
                 rand.nextInt(256) + "." + rand.nextInt(256);
         String[] colums = line.split(" ");
         System.out.print(colums[0] + "\t");
-        colums[0] = ip;
+        colums[0] = ip + "," + count++;
         System.out.println(ip);
         return Arrays.toString(colums);
     }
@@ -42,10 +44,10 @@ public class IPLogProducer extends TimerTask {
     public void run() {
         PropertyReader propertyReader = new PropertyReader();
         Properties props = new Properties();
-        props.put("bootstrap.servers", propertyReader.getPropertyValue(PropertyReader.BROKER_LIST));
-        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        props.put("auto.create.topics.enable", "true");
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, propertyReader.getPropertyValue(PropertyReader.BROKER_LIST));
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        //props.put("auto.create.topics.enable", "true");
 
         KafkaProducer<String, String> producer = new KafkaProducer<>(props);
         BufferedReader reader = readFile();
