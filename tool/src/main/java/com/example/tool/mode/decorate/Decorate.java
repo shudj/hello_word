@@ -1,4 +1,4 @@
-package com.example.tool.mode;
+package com.example.tool.mode.decorate;
 
 /**
  * zhuang shi she ji mo shi
