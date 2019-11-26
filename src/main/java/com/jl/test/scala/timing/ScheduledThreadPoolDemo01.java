@@ -1,4 +1,4 @@
-package com.jl.test.timing;
+package com.jl.test.scala.timing;
 
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
@@ -31,8 +31,8 @@ public class ScheduledThreadPoolDemo01 {
 
 
         ScheduledExecutorService pool = Executors.newScheduledThreadPool(1);
-        pool.scheduleAtFixedRate(task1, 1,1000, TimeUnit.MILLISECONDS);
-        pool.scheduleAtFixedRate(task2,0, 1000, TimeUnit.MILLISECONDS);
+        pool.scheduleAtFixedRate(task1, 1, 1000, TimeUnit.MILLISECONDS);
+        pool.scheduleAtFixedRate(task2, 0, 1000, TimeUnit.MILLISECONDS);
 
     }
 }

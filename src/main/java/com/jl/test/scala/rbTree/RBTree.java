@@ -1,4 +1,4 @@
-package com.jl.test.rbTree;
+package com.jl.test.scala.rbTree;
 
 public class RBTree<T extends Comparable<T>> {
 

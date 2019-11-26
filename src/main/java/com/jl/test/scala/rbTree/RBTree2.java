@@ -1,4 +1,4 @@
-package com.jl.test.rbTree;
+package com.jl.test.scala.rbTree;
 /**
  * Java 语言: 红黑树
  *
